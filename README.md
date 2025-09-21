@@ -57,37 +57,25 @@ kubectl get pods -l app=data-exchange
 kubectl describe pods -l app=data-exchange
 
 ```
+![1](https://github.com/Foxbeerxxx/storage_in_k8s/blob/main/img/img1.png)
 
+![2](https://github.com/Foxbeerxxx/storage_in_k8s/blob/main/img/img2.png)
 
-3. `Заполните здесь этапы выполнения, если требуется ....`
-4. `Заполните здесь этапы выполнения, если требуется ....`
-5. `Заполните здесь этапы выполнения, если требуется ....`
-6. 
+3. `Чтение общего файла из контейнера multitool-reader:`
 
 ```
-Поле для вставки кода...
-....
-....
-....
-....
+POD=$(kubectl get pod -l app=data-exchange -o jsonpath='{.items[0].metadata.name}')
+kubectl exec -it "$POD" -c multitool-reader -- /bin/sh -c 'tail -f /shared/exchange.log'
+
 ```
-
-`При необходимости прикрепитe сюда скриншоты
-![Название скриншота 1](ссылка на скриншот 1)`
-
-
----
-
-
-
-
+![3](https://github.com/Foxbeerxxx/storage_in_k8s/blob/main/img/img3.png)
 
 
 ### Задание 2
 
-`Приведите ответ в свободной форме........`
 
-1. `Заполните здесь этапы выполнения, если требуется ....`
+
+1. `Пишу манифест pv-pvc.yaml`
 2. `Заполните здесь этапы выполнения, если требуется ....`
 3. `Заполните здесь этапы выполнения, если требуется ....`
 4. `Заполните здесь этапы выполнения, если требуется ....`
