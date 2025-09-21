@@ -233,44 +233,113 @@ sudo tail -n 5 /var/k8s/pv-local/exchange.log
 
 ### Задание 3
 
-`Приведите ответ в свободной форме........`
 
-1. `Заполните здесь этапы выполнения, если требуется ....`
-2. `Заполните здесь этапы выполнения, если требуется ....`
-3. `Заполните здесь этапы выполнения, если требуется ....`
-4. `Заполните здесь этапы выполнения, если требуется ....`
-5. `Заполните здесь этапы выполнения, если требуется ....`
-6. 
+
+1. `sc.yaml пишу манифест`
 
 ```
-Поле для вставки кода...
-....
-....
-....
-....
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: local-sc
+provisioner: kubernetes.io/no-provisioner
+volumeBindingMode: WaitForFirstConsumer
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: local-sc-pv
+spec:
+  capacity:
+    storage: 1Gi
+  accessModes:
+    - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: local-sc
+  hostPath:
+    path: /var/k8s/local-sc     # каталог на ноде
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: local-sc-pvc
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+  storageClassName: local-sc
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: data-exchange-sc
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: data-exchange-sc
+  template:
+    metadata:
+      labels:
+        app: data-exchange-sc
+    spec:
+      containers:
+        - name: busybox-writer
+          image: busybox:1.36
+          command: ["/bin/sh","-c"]
+          args:
+            - |
+              echo "writer started"
+              while true; do
+                date +"%F %T: heartbeat" >> /data/exchange.log
+                sleep 5
+              done
+          volumeMounts:
+            - name: data
+              mountPath: /data
+        - name: multitool-reader
+          image: wbitt/network-multitool:alpine-minimal
+          command: ["/bin/sh","-c"]
+          args: ["tail -F /data/exchange.log"]
+          volumeMounts:
+            - name: data
+              mountPath: /data
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: local-sc-pvc
+
 ```
 
-`При необходимости прикрепитe сюда скриншоты
-![Название скриншота](ссылка на скриншот)`
 
-### Задание 4
 
-`Приведите ответ в свободной форме........`
-
-1. `Заполните здесь этапы выполнения, если требуется ....`
-2. `Заполните здесь этапы выполнения, если требуется ....`
-3. `Заполните здесь этапы выполнения, если требуется ....`
-4. `Заполните здесь этапы выполнения, если требуется ....`
-5. `Заполните здесь этапы выполнения, если требуется ....`
-6. 
+2. `Подготовка каталога на ноде:`
 
 ```
-Поле для вставки кода...
-....
-....
-....
-....
-```
+sudo mkdir -p /var/k8s/local-sc
+sudo chmod 777 /var/k8s/local-sc
 
-`При необходимости прикрепитe сюда скриншоты
-![Название скриншота](ссылка на скриншот)`
+```
+3. `Применение и проверка:`
+
+```
+kubectl apply -f sc.yaml
+kubectl get sc,pv,pvc
+kubectl get pods -l app=data-exchange-sc
+kubectl describe pvc local-sc-pvc
+kubectl describe pod -l app=data-exchange-sc
+```
+![12](https://github.com/Foxbeerxxx/storage_in_k8s/blob/main/img/img12.png)
+
+![13](https://github.com/Foxbeerxxx/storage_in_k8s/blob/main/img/img13.png)
+
+4. `Чтение файла из контейнера multitool`
+
+```
+POD=$(kubectl get pod -l app=data-exchange-sc -o jsonpath='{.items[0].metadata.name}')
+kubectl exec -it "$POD" -c multitool-reader -- /bin/sh -c 'tail -F /data/exchange.log'
+
+```
+![14](https://github.com/Foxbeerxxx/storage_in_k8s/blob/main/img/img14.png)
