@@ -1,33 +1,64 @@
-# Домашнее задание к занятию "`Название занятия`" - `Фамилия и имя студента`
+# Домашнее задание к занятию "`Хранение в K8s`" - `Татаринцев Алексей`
 
 
-### Инструкция по выполнению домашнего задания
-
-   1. Сделайте `fork` данного репозитория к себе в Github и переименуйте его по названию или номеру занятия, например, https://github.com/имя-вашего-репозитория/git-hw или  https://github.com/имя-вашего-репозитория/7-1-ansible-hw).
-   2. Выполните клонирование данного репозитория к себе на ПК с помощью команды `git clone`.
-   3. Выполните домашнее задание и заполните у себя локально этот файл README.md:
-      - впишите вверху название занятия и вашу фамилию и имя
-      - в каждом задании добавьте решение в требуемом виде (текст/код/скриншоты/ссылка)
-      - для корректного добавления скриншотов воспользуйтесь [инструкцией "Как вставить скриншот в шаблон с решением](https://github.com/netology-code/sys-pattern-homework/blob/main/screen-instruction.md)
-      - при оформлении используйте возможности языка разметки md (коротко об этом можно посмотреть в [инструкции  по MarkDown](https://github.com/netology-code/sys-pattern-homework/blob/main/md-instruction.md))
-   4. После завершения работы над домашним заданием сделайте коммит (`git commit -m "comment"`) и отправьте его на Github (`git push origin`);
-   5. Для проверки домашнего задания преподавателем в личном кабинете прикрепите и отправьте ссылку на решение в виде md-файла в вашем Github.
-   6. Любые вопросы по выполнению заданий спрашивайте в чате учебной группы и/или в разделе “Вопросы по заданию” в личном кабинете.
-   
-Желаем успехов в выполнении домашнего задания!
-   
-### Дополнительные материалы, которые могут быть полезны для выполнения задания
-
-1. [Руководство по оформлению Markdown файлов](https://gist.github.com/Jekins/2bf2d0638163f1294637#Code)
-
----
 
 ### Задание 1
 
-`Приведите ответ в свободной форме........`
+1. `Пишу манифест containers-data-exchange.yaml`
 
-1. `Заполните здесь этапы выполнения, если требуется ....`
-2. `Заполните здесь этапы выполнения, если требуется ....`
+```
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: data-exchange
+  labels:
+    app: data-exchange
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: data-exchange
+  template:
+    metadata:
+      labels:
+        app: data-exchange
+    spec:
+      volumes:
+        - name: shared-data
+          emptyDir: {}
+      containers:
+        - name: busybox-writer
+          image: busybox:1.36
+          volumeMounts:
+            - name: shared-data
+              mountPath: /shared
+          command: ["/bin/sh","-c"]
+          args:
+            - |
+              echo "writer started"
+              while true; do
+                date +"%F %T: heartbeat" >> /shared/exchange.log
+                sleep 5
+              done
+        - name: multitool-reader
+          image: wbitt/network-multitool:alpine-minimal
+          volumeMounts:
+            - name: shared-data
+              mountPath: /shared
+          command: ["/bin/sh","-c"]
+          args: ["sleep infinity"]
+
+```
+2. `Запускаю манифест и проверяю`
+
+```
+kubectl apply -f containers-data-exchange.yaml
+kubectl get pods -l app=data-exchange
+kubectl describe pods -l app=data-exchange
+
+```
+
+
 3. `Заполните здесь этапы выполнения, если требуется ....`
 4. `Заполните здесь этапы выполнения, если требуется ....`
 5. `Заполните здесь этапы выполнения, если требуется ....`
@@ -46,6 +77,11 @@
 
 
 ---
+
+
+
+
+
 
 ### Задание 2
 
